@@ -11,6 +11,7 @@
 &soc {
 	qcom,bcl {
 		/delete-property/ qcom,bcl-enable;
+		#qcom,bcl-enable;
 	};
 
 	i2c_2: i2c@78b6000 { /* BLSP1 QUP2 */

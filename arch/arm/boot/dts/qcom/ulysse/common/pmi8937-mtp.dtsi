@@ -212,14 +212,7 @@
 };
 
 &soc {
-	led_flash0: qcom,camera-flash {
-		/delete-property/ cell-index;
-		/delete-property/ compatible;
-		/delete-property/ qcom,flash-type;
-		/delete-property/ qcom,flash-source;
-		/delete-property/ qcom,torch-source;
-		/delete-property/ qcom,switch-source;
-	};
+	/delete-node/ qcom,camera-flash;
 };
 
 &pmi8937_fg {
