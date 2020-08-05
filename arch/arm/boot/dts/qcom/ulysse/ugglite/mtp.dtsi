@@ -1,0 +1,29 @@
+&pm8937_gpios{
+	gpio@c500{
+		status = "okay";
+		qcom,mode = <1>;		/*DIGITAL OUT*/
+		qcom,pull = <5>;		/*NO PULL*/
+		qcom,src-sel = <5>;		/*DTEST2 OUT*/
+		qcom,vin-sel = <3>;
+		qcom,master-en = <1>;		/*ENABLE GPIO*/
+		qcom,out-strength = <3>;	/*Max strength current*/
+	};
+};
+
+&soc {
+	goodix_fp{
+		vcc_spi_supply = <&pm8917_l6>;
+		vcc_ana_supply = <&pm8917_l6>;
+		vdd_io-supply = <&pm8917_l6>;
+	};
+
+	pwm_ir {
+		vdd-supply = <&pm8917_l10>;
+	};
+
+	fpc1020 {
+		vcc_spi-supply  = <&pm8917_l6>;
+		vdd_io-supply   = <&pm8917_l6>;
+		vdd_ana-supply  = <&pm8917_l6>;
+	};
+};

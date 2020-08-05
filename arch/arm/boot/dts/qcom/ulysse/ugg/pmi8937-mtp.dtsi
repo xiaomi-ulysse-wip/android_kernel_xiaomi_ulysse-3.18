@@ -1,0 +1,10 @@
+&i2c_2 {
+	bq2560x_otg_supply: bq2560x@6B {
+		ti,bq2560x,ta-ichg = <2000>;
+		qcom,thermal-mitigation = <2000 1000 500 200 0>;
+	};
+};
+
+&usb_otg{
+	qcom,hsusb-otg-phy-init-seq = <0x38 0x81 0xffffffff>;
+};

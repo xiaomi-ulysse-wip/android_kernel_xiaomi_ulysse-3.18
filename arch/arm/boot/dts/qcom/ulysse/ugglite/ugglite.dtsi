@@ -1,0 +1,4 @@
+#include "camera-sensor-mtp.dtsi"
+#include "mtp.dtsi"
+#include "pmi8937-mtp.dtsi"
+#include "regulator.dtsi"

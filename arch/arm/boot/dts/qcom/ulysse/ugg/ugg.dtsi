@@ -1,0 +1,6 @@
+#include "camera-pinctrl.dtsi"
+#include "camera-sensor-mtp.dtsi"
+#include "mtp.dtsi"
+#include "pmi8937-mtp.dtsi"
+#include "regulator.dtsi"
+#include "wsa881x.dtsi"

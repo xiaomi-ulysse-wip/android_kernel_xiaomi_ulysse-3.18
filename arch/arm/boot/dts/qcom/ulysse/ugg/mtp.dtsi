@@ -1,0 +1,21 @@
+&mdss_dsi1 {
+	/delete-property/ qcom,platform-enable-gpio;
+};
+
+&soc {
+	goodix_fp{
+		vcc_spi_supply = <&pm8937_l6>;
+		vcc_ana_supply = <&pm8937_l6>;
+		vdd_io-supply = <&pm8937_l6>;
+	};
+
+	pwm_ir {
+		vdd-supply = <&pm8937_l10>;
+	};
+
+	fpc1020 {
+		vcc_spi-supply  = <&pm8937_l6>;
+		vdd_io-supply   = <&pm8937_l6>;
+		vdd_ana-supply  = <&pm8937_l6>;
+	};
+};

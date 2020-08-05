@@ -1,0 +1,21 @@
+&slim_msm {
+	tasha_codec {
+		swr_master {
+			wsa881x_211: wsa881x@20170211 {
+				qcom,spkr-sd-n-gpio = <&tlmm 1 0>;
+			};
+
+			wsa881x_212: wsa881x@20170212 {
+				qcom,spkr-sd-n-gpio = <&tlmm 1 0>;
+			};
+
+			wsa881x_213: wsa881x@21170213 {
+				qcom,spkr-sd-n-gpio = <&tlmm 1 0>;
+			};
+
+			wsa881x_214: wsa881x@21170214 {
+				qcom,spkr-sd-n-gpio = <&tlmm 1 0>;
+			};
+		};
+	};
+};

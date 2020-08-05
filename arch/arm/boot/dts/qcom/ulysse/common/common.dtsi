@@ -1,0 +1,16 @@
+#include "dependencies.dtsi"
+
+#include "pinctrl.dtsi"
+#include "camera-pinctrl.dtsi"
+
+#include "audio.dtsi"
+#include "audio-mtp.dtsi"
+#include "mdss.dtsi"
+#include "mdss-panels.dtsi"
+#include "msm-audio.dtsi"
+#include "msm-pm8937.dtsi"
+#include "mtp.dtsi"
+#include "pm.dtsi"
+#include "pmi8937-mtp.dtsi"
+#include "root.dtsi"
+#include "treble.dtsi"
