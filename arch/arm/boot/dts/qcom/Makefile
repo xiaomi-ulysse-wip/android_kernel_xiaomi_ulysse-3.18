@@ -1,3 +1,6 @@
+dtb-$(CONFIG_UGG) += ugg.dtb
+dtb-$(CONFIG_UGGLITE) += ugglite.dtb
+
 dtb-$(CONFIG_ARCH_MSM8996) += msm8996-v2-pmi8994-mtp.dtb \
 	msm8996-v2-pmi8994-pmk8001-mtp.dtb \
 	msm8996-v2-pmi8994-pm8004-mtp.dtb \
@@ -173,7 +176,7 @@ dtb-$(CONFIG_ARCH_SDX20) += sdx20-emmc-cdp.dtb \
 	sdx20-v2-emmc-pcie-ep-mtp.dtb \
 	sdx20-v2-nand-pcie-ep-mtp.dtb
 
-dtb-$(CONFIG_ARCH_MSM8937) += ugg-full.dtb 
+#dtb-$(CONFIG_ARCH_MSM8937) += ugg-full.dtb 
 #dtb-$(CONFIG_ARCH_MSM8937) += msm8937-rumi.dtb \
 	msm8937-pmi8950-cdp.dtb \
 	msm8937-pmi8937-cdp.dtb \
@@ -225,7 +228,7 @@ dtb-$(CONFIG_ARCH_MSM8920) += msm8920-pmi8937-cdp.dtb \
 	msm8920-pmi8940-qrd-sku7.dtb \
 	msm8920-pmi8950-ext-codec-cdp.dtb
 
-dtb-$(CONFIG_ARCH_MSM8940) += ugg-full.dtb 
+#dtb-$(CONFIG_ARCH_MSM8940) += ugg-full.dtb 
 
 #dtb-$(CONFIG_ARCH_MSM8940) += msm8940-pmi8937-cdp.dtb \
 	msm8940-pmi8937-mtp.dtb \
