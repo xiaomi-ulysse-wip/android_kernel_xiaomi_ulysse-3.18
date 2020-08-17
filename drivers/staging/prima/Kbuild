@@ -13,6 +13,9 @@ ifeq ($(KERNEL_BUILD),1)
 	WLAN_ROOT := drivers/staging/prima
 endif
 
+#Flag to enable Legacy Fast Roaming(LFR) Make Before Break
+    CONFIG_PRIMA_WLAN_LFR_MBB := y
+
 ifeq ($(KERNEL_BUILD), 0)
 # These are configurable via Kconfig for kernel-based builds
 # Need to explicitly configure for Android-based builds
