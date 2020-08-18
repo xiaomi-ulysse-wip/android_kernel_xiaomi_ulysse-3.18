@@ -1956,6 +1956,7 @@ static void si_initialize_powertune_defaults(struct radeon_device *rdev)
 		case 0x682C:
 			si_pi->cac_weights = cac_weights_cape_verde_pro;
 			si_pi->dte_data = dte_data_sun_xt;
+			update_dte_from_pl2 = true;
 			break;
 		case 0x6825:
 		case 0x6827:
@@ -4156,7 +4157,7 @@ static int si_populate_smc_voltage_tables(struct radeon_device *rdev,
 							      &rdev->pm.dpm.dyn_state.phase_shedding_limits_table)) {
 				si_populate_smc_voltage_table(rdev, &si_pi->vddc_phase_shed_table, table);
 
-				table->phaseMaskTable.lowMask[SISLANDS_SMC_VOLTAGEMASK_VDDC] =
+				table->phaseMaskTable.lowMask[SISLANDS_SMC_VOLTAGEMASK_VDDC_PHASE_SHEDDING] =
 					cpu_to_be32(si_pi->vddc_phase_shed_table.mask_low);
 
 				si_write_smc_soft_register(rdev, SI_SMC_SOFT_REGISTER_phase_shedding_delay,

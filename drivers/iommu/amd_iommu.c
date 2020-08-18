@@ -1987,6 +1987,9 @@ static void dma_ops_domain_free(struct dma_ops_domain *dom)
 		kfree(dom->aperture[i]);
 	}
 
+	if (dom->domain.id)
+		domain_id_free(dom->domain.id);
+
 	kfree(dom);
 }
 
@@ -2324,6 +2327,8 @@ static int attach_device(struct device *dev,
 	 * here to evict all dirty stuff.
 	 */
 	domain_flush_tlb_pde(domain);
+
+	domain_flush_complete(domain);
 
 	return ret;
 }

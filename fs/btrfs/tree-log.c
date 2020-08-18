@@ -2565,6 +2565,12 @@ int btrfs_sync_log(struct btrfs_trans_handle *trans,
 	log->log_transid = root->log_transid;
 	root->log_start_pid = 0;
 	/*
+	 * Update or create log root item under the root's log_mutex to prevent
+	 * races with concurrent log syncs that can lead to failure to update
+	 * log root item because it was not created yet.
+	 */
+	ret = update_log_root(trans, log);
+	/*
 	 * IO has been started, blocks of the log tree have WRITTEN flag set
 	 * in their headers. new modifications of the log will be written to
 	 * new positions. so it's safe to allow log writers to go in.
@@ -2582,8 +2588,6 @@ int btrfs_sync_log(struct btrfs_trans_handle *trans,
 	root_log_ctx.log_transid = log_root_tree->log_transid;
 
 	mutex_unlock(&log_root_tree->log_mutex);
-
-	ret = update_log_root(trans, log);
 
 	mutex_lock(&log_root_tree->log_mutex);
 	if (atomic_dec_and_test(&log_root_tree->log_writers)) {
@@ -4091,13 +4095,8 @@ static int btrfs_log_trailing_hole(struct btrfs_trans_handle *trans,
 					struct btrfs_file_extent_item);
 
 		if (btrfs_file_extent_type(leaf, extent) ==
-		    BTRFS_FILE_EXTENT_INLINE) {
-			len = btrfs_file_extent_inline_len(leaf,
-							   path->slots[0],
-							   extent);
-			ASSERT(len == i_size);
+		    BTRFS_FILE_EXTENT_INLINE)
 			return 0;
-		}
 
 		len = btrfs_file_extent_num_bytes(leaf, extent);
 		/* Last extent goes beyond i_size, no need to log a hole. */
@@ -4981,6 +4980,21 @@ void btrfs_record_unlink_dir(struct btrfs_trans_handle *trans,
 	return;
 
 record:
+	BTRFS_I(dir)->last_unlink_trans = trans->transid;
+}
+
+/*
+ * Make sure that if someone attempts to fsync the parent directory of a deleted
+ * snapshot, it ends up triggering a transaction commit. This is to guarantee
+ * that after replaying the log tree of the parent directory's root we will not
+ * see the snapshot anymore and at log replay time we will not see any log tree
+ * corresponding to the deleted snapshot's root, which could lead to replaying
+ * it after replaying the log tree of the parent directory (which would replay
+ * the snapshot delete operation).
+ */
+void btrfs_record_snapshot_destroy(struct btrfs_trans_handle *trans,
+				   struct inode *dir)
+{
 	BTRFS_I(dir)->last_unlink_trans = trans->transid;
 }
 

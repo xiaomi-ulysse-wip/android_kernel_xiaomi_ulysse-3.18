@@ -75,7 +75,6 @@
 #include <linux/uprobes.h>
 #include <linux/aio.h>
 #include <linux/compiler.h>
-#include <linux/kcov.h>
 
 #include <asm/pgtable.h>
 #include <asm/pgalloc.h>
@@ -373,8 +372,6 @@ static struct task_struct *dup_task_struct(struct task_struct *orig)
 
 	account_kernel_stack(ti, 1);
 
-	kcov_task_init(tsk);
-
 	return tsk;
 
 free_ti:
@@ -569,7 +566,8 @@ static void mm_init_owner(struct mm_struct *mm, struct task_struct *p)
 #endif
 }
 
-static struct mm_struct *mm_init(struct mm_struct *mm, struct task_struct *p)
+static struct mm_struct *mm_init(struct mm_struct *mm, struct task_struct *p,
+	struct user_namespace *user_ns)
 {
 	mm->mmap = NULL;
 	mm->mm_rb = RB_ROOT;
@@ -608,6 +606,7 @@ static struct mm_struct *mm_init(struct mm_struct *mm, struct task_struct *p)
 	if (init_new_context(p, mm))
 		goto fail_nocontext;
 
+	mm->user_ns = get_user_ns(user_ns);
 	return mm;
 
 fail_nocontext:
@@ -645,7 +644,7 @@ struct mm_struct *mm_alloc(void)
 		return NULL;
 
 	memset(mm, 0, sizeof(*mm));
-	return mm_init(mm, current);
+	return mm_init(mm, current, current_user_ns());
 }
 
 /*
@@ -660,6 +659,7 @@ void __mmdrop(struct mm_struct *mm)
 	destroy_context(mm);
 	mmu_notifier_mm_destroy(mm);
 	check_mm(mm);
+	put_user_ns(mm->user_ns);
 	free_mm(mm);
 }
 EXPORT_SYMBOL_GPL(__mmdrop);
@@ -742,6 +742,29 @@ static void dup_mm_exe_file(struct mm_struct *oldmm, struct mm_struct *newmm)
 	 * this is called during fork when the task is not yet in /proc */
 	newmm->exe_file = get_mm_exe_file(oldmm);
 }
+
+/**
+ * get_task_exe_file - acquire a reference to the task's executable file
+ *
+ * Returns %NULL if task's mm (if any) has no associated executable file or
+ * this is a kernel thread with borrowed mm (see the comment above get_task_mm).
+ * User must release file via fput().
+ */
+struct file *get_task_exe_file(struct task_struct *task)
+{
+	struct file *exe_file = NULL;
+	struct mm_struct *mm;
+
+	task_lock(task);
+	mm = task->mm;
+	if (mm) {
+		if (!(task->flags & PF_KTHREAD))
+			exe_file = get_mm_exe_file(mm);
+	}
+	task_unlock(task);
+	return exe_file;
+}
+EXPORT_SYMBOL(get_task_exe_file);
 
 /**
  * get_task_mm - acquire a reference to the task's mm
@@ -858,14 +881,12 @@ void mm_release(struct task_struct *tsk, struct mm_struct *mm)
 	deactivate_mm(tsk, mm);
 
 	/*
-	 * If we're exiting normally, clear a user-space tid field if
-	 * requested.  We leave this alone when dying by signal, to leave
-	 * the value intact in a core dump, and to save the unnecessary
-	 * trouble, say, a killed vfork parent shouldn't touch this mm.
-	 * Userland only wants this done for a sys_exit.
+	 * Signal userspace if we're not exiting with a core dump
+	 * because we want to leave the value intact for debugging
+	 * purposes.
 	 */
 	if (tsk->clear_child_tid) {
-		if (!(tsk->flags & PF_SIGNALED) &&
+		if (!(tsk->signal->flags & SIGNAL_GROUP_COREDUMP) &&
 		    atomic_read(&mm->mm_users) > 1) {
 			/*
 			 * We don't check the error code - if userspace has
@@ -901,7 +922,7 @@ static struct mm_struct *dup_mm(struct task_struct *tsk)
 
 	memcpy(mm, oldmm, sizeof(*mm));
 
-	if (!mm_init(mm, tsk))
+	if (!mm_init(mm, tsk, mm->user_ns))
 		goto fail_nomem;
 
 	dup_mm_exe_file(oldmm, mm);
@@ -1369,8 +1390,6 @@ static struct task_struct *copy_process(unsigned long clone_flags,
 
 	p->io_context = NULL;
 	p->audit_context = NULL;
-	if (clone_flags & CLONE_THREAD)
-		threadgroup_change_begin(current);
 	cgroup_fork(p);
 #ifdef CONFIG_NUMA
 	p->mempolicy = mpol_dup(p->mempolicy);
@@ -1513,6 +1532,8 @@ static struct task_struct *copy_process(unsigned long clone_flags,
 	INIT_LIST_HEAD(&p->thread_group);
 	p->task_works = NULL;
 
+	if (clone_flags & CLONE_THREAD)
+		threadgroup_change_begin(current);
 	/*
 	 * Make it visible to the rest of the system, but dont wake it up yet.
 	 * Need tasklist lock for parent etc handling!
@@ -1613,6 +1634,8 @@ static struct task_struct *copy_process(unsigned long clone_flags,
 	return p;
 
 bad_fork_free_pid:
+	if (clone_flags & CLONE_THREAD)
+		threadgroup_change_end(current);
 	if (pid != &init_struct_pid)
 		free_pid(pid);
 bad_fork_cleanup_io:
@@ -1643,8 +1666,6 @@ bad_fork_cleanup_policy:
 	mpol_put(p->mempolicy);
 bad_fork_cleanup_threadgroup_lock:
 #endif
-	if (clone_flags & CLONE_THREAD)
-		threadgroup_change_end(current);
 	delayacct_tsk_free(p);
 	module_put(task_thread_info(p)->exec_domain->module);
 bad_fork_cleanup_count:
